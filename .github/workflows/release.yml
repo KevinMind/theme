@@ -1,4 +1,4 @@
-name: Package Kevinmind Theme on Push
+name: Package and Release Kevinmind Theme
 
 on:
   push:
@@ -6,10 +6,10 @@ on:
       - main
 
 jobs:
-  package-theme:
+  package-and-release:
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # Required for committing/pushing back to the repo
+      contents: write  # Required for committing/pushing and creating releases
 
     steps:
       - name: Checkout repository
@@ -18,7 +18,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'  # Use a recent LTS version; adjust if needed
+          node-version: '20'
 
       - name: Install vsce
         run: npm install -g @vscode/vsce
@@ -26,14 +26,47 @@ jobs:
       - name: Package the theme
         run: vsce package
 
+      - name: Get latest release version
+        id: get_version
+        run: |
+          # Get the latest release tag
+          LATEST_TAG=$(gh release list --limit 1 --json tagName --jq '.[0].tagName' 2>/dev/null || echo "v0")
+
+          # Extract the number from the tag (e.g., v5 -> 5)
+          if [[ $LATEST_TAG =~ ^v([0-9]+)$ ]]; then
+            LATEST_NUM="${BASH_REMATCH[1]}"
+          else
+            LATEST_NUM=0
+          fi
+
+          # Increment the version
+          NEW_NUM=$((LATEST_NUM + 1))
+          NEW_TAG="v${NEW_NUM}"
+
+          echo "new_tag=${NEW_TAG}" >> $GITHUB_OUTPUT
+          echo "Next version will be: ${NEW_TAG}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Release
+        id: create_release
+        run: |
+          VSIX_FILE=$(ls *.vsix | head -n 1)
+          gh release create ${{ steps.get_version.outputs.new_tag }} \
+            --title "Release ${{ steps.get_version.outputs.new_tag }}" \
+            --notes "Automated release of Kevinmind theme" \
+            "${VSIX_FILE}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Commit and push packaged file
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
-          
-          # Stage the .vsix file (assuming it's generated in the root)
-          git add *.vsix || true  # '|| true' to ignore if no file
-          
+
+          # Stage the .vsix file
+          git add *.vsix || true
+
           # Commit if there are changes
           if ! git diff --cached --quiet; then
             git commit -m "Auto-packaged Kevinmind theme [skip ci]"
