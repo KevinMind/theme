@@ -1,7 +1,7 @@
 {
-  "name": "better-solarized-theme",
-  "displayName": "Better Solarized Theme",
-  "description": "A minimal, improved Solarized light/dark theme for VS Code/Cursor",
+  "name": "kevinmind",
+  "displayName": "Kevinmind Theme",
+  "description": "A minimal Solarized-inspired light/dark theme with Matrix-style terminal",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.60.0"
@@ -12,14 +12,14 @@
   "contributes": {
     "themes": [
       {
-        "label": "Better Solarized Light",
+        "label": "Kevinmind Light",
         "uiTheme": "vs",
-        "path": "./themes/better-solarized-light.json"
+        "path": "./themes/kevinmind/light.json"
       },
       {
-        "label": "Better Solarized Dark",
+        "label": "Kevinmind Dark",
         "uiTheme": "vs-dark",
-        "path": "./themes/better-solarized-dark.json"
+        "path": "./themes/kevinmind/dark.json"
       }
     ]
   }
