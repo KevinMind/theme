@@ -1,0 +1,26 @@
+{
+  "name": "better-solarized-theme",
+  "displayName": "Better Solarized Theme",
+  "description": "A minimal, improved Solarized light/dark theme for VS Code/Cursor",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.60.0"
+  },
+  "categories": [
+    "Themes"
+  ],
+  "contributes": {
+    "themes": [
+      {
+        "label": "Better Solarized Light",
+        "uiTheme": "vs",
+        "path": "./themes/better-solarized-light.json"
+      },
+      {
+        "label": "Better Solarized Dark",
+        "uiTheme": "vs-dark",
+        "path": "./themes/better-solarized-dark.json"
+      }
+    ]
+  }
+}
