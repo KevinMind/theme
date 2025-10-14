@@ -1,0 +1,79 @@
+{
+  "name": "Solarized Dark",
+  "type": "dark",
+  "colors": {
+    "editor.background": "#002b36",
+    "editor.foreground": "#839496",
+    "editorLineNumber.foreground": "#586e75",
+    "editorCursor.foreground": "#d33682",
+    "editor.selectionBackground": "#073642",
+    "editor.lineHighlightBackground": "#073642",
+    "activityBar.background": "#073642",
+    "titleBar.activeBackground": "#073642",
+    "statusBar.background": "#073642",
+    "terminal.background": "#000000",
+    "terminal.foreground": "#00ff00",
+    "terminalCursor.background": "#000000",
+    "terminalCursor.foreground": "#00ff00",
+    "terminal.ansiBlack": "#000000",
+    "terminal.ansiBrightBlack": "#004d00",
+    "terminal.ansiBlue": "#00cc00",
+    "terminal.ansiBrightBlue": "#00ff00",
+    "terminal.ansiCyan": "#009900",
+    "terminal.ansiBrightCyan": "#00cc00",
+    "terminal.ansiGreen": "#00ff00",
+    "terminal.ansiBrightGreen": "#33ff33",
+    "terminal.ansiMagenta": "#00aa00",
+    "terminal.ansiBrightMagenta": "#00dd00",
+    "terminal.ansiRed": "#006600",
+    "terminal.ansiBrightRed": "#009900",
+    "terminal.ansiWhite": "#00ff00",
+    "terminal.ansiBrightWhite": "#33ff33",
+    "terminal.ansiYellow": "#00cc00",
+    "terminal.ansiBrightYellow": "#00ff00"
+  },
+  "tokenColors": [
+    {
+      "scope": ["comment", "punctuation.definition.comment"],
+      "settings": {
+        "foreground": "#586e75"
+      }
+    },
+    {
+      "scope": ["keyword", "storage"],
+      "settings": {
+        "foreground": "#859900"
+      }
+    },
+    {
+      "scope": ["string"],
+      "settings": {
+        "foreground": "#2aa198"
+      }
+    },
+    {
+      "scope": ["constant.numeric", "constant.language"],
+      "settings": {
+        "foreground": "#b58900"
+      }
+    },
+    {
+      "scope": ["entity.name.function", "support.function"],
+      "settings": {
+        "foreground": "#268bd2"
+      }
+    },
+    {
+      "scope": ["variable"],
+      "settings": {
+        "foreground": "#cb4b16"
+      }
+    },
+    {
+      "scope": ["entity.name.type", "entity.other.inherited-class"],
+      "settings": {
+        "foreground": "#6c71c4"
+      }
+    }
+  ]
+}
