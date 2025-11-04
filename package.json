@@ -3,6 +3,10 @@
   "displayName": "Kevinmind Theme",
   "description": "A minimal Solarized-inspired light/dark theme with Matrix-style terminal",
   "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/KevinMind/theme.git"
+  },
   "engines": {
     "vscode": "^1.60.0"
   },
@@ -22,5 +26,11 @@
         "path": "./themes/kevinmind/dark.json"
       }
     ]
+  },
+  "scripts": {
+    "build": "vsce package"
+  },
+  "devDependencies": {
+    "@vscode/vsce": "^3.6.2"
   }
 }
