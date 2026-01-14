@@ -239,16 +239,9 @@ if not_dry "Creating ${BREW_FILE}..."; then
 cat << "EOF" > "${BREW_FILE}"
 # Taps
 tap "xcodesorg/made"
+tap "withgraphite/tap"
 
 # Formulae
-
-
-
-
-
-
-
-
 brew "cjson"
 brew "cmake"
 brew "defaultbrowser"
@@ -256,6 +249,7 @@ brew "ffmpeg"
 brew "fizz"
 brew "gettext"
 brew "gh"
+brew "withgraphite/tap/graphite"
 brew "jq"
 brew "mysql-client@8.0"
 brew "npm"
@@ -265,6 +259,7 @@ brew "python@3.13"
 brew "ruby-install"
 brew "scrcpy"
 brew "sqlite"
+brew "tmux"
 brew "uv"
 brew "watchman"
 brew "xcodes"
@@ -274,11 +269,10 @@ brew "yarn"
 cask "google-chrome"
 cask "cursor"
 cask "slack"
-cask "google-cloud-sdk"
+cask "gcloud-cli"
 cask "ghostty"
 cask "tuple"
 cask "spotify"
-cask "slack"
 cask "logitune"
 EOF
 fi
@@ -343,20 +337,34 @@ fi
 # ============================================
 log_step "Installing Xcode Command Line Tools..."
 
-if success "xcode-select -p"; then
-    log_success "Xcode Command Line Tools already installed"
-elif not_dry "Installing Xcode Command Line Tools (this may take a while)..."; then
-    xcode-select --install
+# Check if already installed
+if xcode-select -p &>/dev/null; then
+    log_success "Xcode Command Line Tools already installed at $(xcode-select -p)"
+elif not_dry "Installing Xcode Command Line Tools..."; then
+    # Try to install - this may show a dialog or say already installed
+    install_output=$(xcode-select --install 2>&1)
 
-    # Wait for installation to complete
-    log_warning "Please complete the Xcode Command Line Tools installation in the dialog"
-    log_warning "Press Enter once the installation is complete..."
-    read -r < /dev/tty
-
-    if success "xcode-select -p"; then
-        log_success "Xcode Command Line Tools installed"
+    # Check if already installed (different state)
+    if echo "$install_output" | grep -q "already installed"; then
+        log_success "Xcode Command Line Tools already installed"
+        log_info "To check for updates, run: softwareupdate --list"
     else
-        prompt_continue "Xcode Command Line Tools installation failed or incomplete"
+        # Installation dialog was triggered
+        echo ""
+        log_warning "A dialog should have appeared to install Xcode Command Line Tools"
+        log_info "Once installation completes, press Enter to continue..."
+        log_info ""
+        log_info "If no dialog appeared, you can install manually:"
+        log_info "  1. Open System Settings → General → Software Update"
+        log_info "  2. Or run: softwareupdate --install --all"
+        echo ""
+        read -r < /dev/tty
+
+        if xcode-select -p &>/dev/null; then
+            log_success "Xcode Command Line Tools installed"
+        else
+            prompt_continue "Xcode Command Line Tools installation failed or incomplete"
+        fi
     fi
 fi
 
@@ -392,6 +400,7 @@ selection-background = #c1deff
 selection-foreground = #000000
 cursor-color = #c7c7c7
 cursor-text = #8c8c8c
+split-divider-color = "#FFFFFF"
 palette = 0=#000000
 palette = 1=#c91b00
 palette = 2=#00c200
@@ -410,6 +419,10 @@ palette = 14=#60fdff
 palette = 15=#ffffff
 macos-titlebar-style = native
 font-size = 16
+
+# Keybindings
+keybind = global:cmd+backquote=toggle_quick_terminal
+keybind = shift+enter=text:\x1b\r
 EOF
         log_success "Ghostty configuration created."
     } || {
@@ -452,7 +465,14 @@ if not_dry "Adding Cursor settings/keybindings..."; then
     "cursor.enable_agent_window_setting": true,
     "git.autofetch": true,
     "cursor.agent_layout_browser_beta_setting": true,
-    "window.autoDetectColorScheme": true
+    "window.autoDetectColorScheme": true,
+    "git.openRepositoryInParentFolders": "always",
+    "diffEditor.ignoreTrimWhitespace": false,
+    "claudeCode.preferredLocation": "sidebar",
+    "workbench.editor.enablePreview": false,
+    "claudeCode.disableLoginPrompt": true,
+    "claudeCode.initialPermissionMode": "plan",
+    "claudeCode.useTerminal": true
 }
 EOF
         cat << "EOF" > "${CURSOR_DIR}/keybindings.json"
@@ -579,45 +599,66 @@ else
 fi
 
 git config --global http.postBuffer 524288000
-if git config --global http.lowSpeedLimit; then
-    git config --global --unset http.lowSpeedLimit
-fi
-if git config --global http.lowSpeedTime; then
-    git config --global --unset http.lowSpeedTime
-fi
+
+# Remove low speed settings if they exist
+git config --global --unset http.lowSpeedLimit 2>/dev/null || true
+git config --global --unset http.lowSpeedTime 2>/dev/null || true
 
 # ============================================
 # Step 9: Authorize GitHub CLI
 # ============================================
 log_step "Authorizing GitHub CLI..."
 
-if not_dry "Checking for GitHub CLI" && command_exists gh; then
+if ! command_exists gh; then
+    log_error "gh not found in PATH"
+    log_info "Try: brew install gh"
+    prompt_continue "Cannot authenticate gh (not found in PATH)"
+else
     # Check if already authenticated
-    if success "gh auth status"; then
+    if gh auth status &>/dev/null; then
         log_success "GitHub CLI already authorized"
     elif [[ -n "$ARG_GITHUB_TOKEN" ]]; then
         if not_dry "Authenticating GitHub CLI with provided token..."; then
-            { echo "$ARG_GITHUB_TOKEN" | gh auth login --with-token && log_success "GitHub CLI authorized"; } ||
-            { prompt_continue "GitHub CLI token authentication failed"; }
+            if echo "$ARG_GITHUB_TOKEN" | gh auth login --with-token; then
+                log_success "GitHub CLI authorized"
+            else
+                prompt_continue "GitHub CLI token authentication failed"
+            fi
         fi
     elif [[ "$NO_INPUT" == false ]]; then
-        if not_dry "Starting interactive gh authentication (browser will open)..."; then
-            { gh auth login && log_success "GitHub CLI authorized"; } ||
-            { prompt_continue "GitHub CLI authentication failed"; }
+        if not_dry "Starting GitHub CLI authentication..."; then
+            log_info "Follow the prompts below to authenticate:"
+            echo ""
+            if gh auth login --hostname github.com --git-protocol https --web; then
+                log_success "GitHub CLI authorized"
+            else
+                prompt_continue "GitHub CLI authentication failed"
+            fi
         fi
     else
         log_warning "Skipping GitHub CLI authentication (non-interactive mode and no token provided)"
     fi
-else
-    if not_dry "Handling missing GitHub CLI" &> /dev/null; then
-        log_error "gh not found in PATH"
-        log_info "You may need to restart terminal and run: gh auth login"
-        prompt_continue "Cannot authenticate gh (not found in PATH)"
-    else
-        log_success "GitHub CLI authorization would be handled here."
-    fi
 fi
 
+# ============================================
+# Step 10: Authorize Graphite CLI
+# ============================================
+log_step "Authorizing Graphite CLI..."
+
+if ! command_exists gt; then
+    log_warning "Graphite CLI not found"
+    log_info "Install with: brew install withgraphite/tap/graphite"
+else
+    # Check if already authenticated
+    if gt auth --cwd "${HOME}" &>/dev/null; then
+        log_success "Graphite CLI already authenticated"
+    elif [[ "$NO_INPUT" == false ]]; then
+        log_info "Get your token from: https://app.graphite.com/activate"
+        log_info "Then run: gt auth --token <your-token>"
+    else
+        log_warning "Skipping Graphite CLI authentication (non-interactive mode)"
+    fi
+fi
 
 # ============================================
 # Final Steps
@@ -628,8 +669,9 @@ echo -e "${GREEN}═════════════════════
 
 log_info "Next steps:"
 echo -e "  ${CYAN}1.${RESET} Restart your terminal"
-echo -e "  ${CYAN}2.${RESET} Configure Cursor and other apps"
-echo -e "  ${CYAN}3.${RESET} Sign in to Slack, Chrome, and other apps"
+echo -e "  ${CYAN}2.${RESET} Authenticate Graphite: gt auth --token <token>"
+echo -e "  ${CYAN}3.${RESET} Configure Cursor and other apps"
+echo -e "  ${CYAN}4.${RESET} Sign in to Slack, Chrome, and other apps"
 
 echo -e "\n${GREEN}Booti${PURPLE}booti${RESET} says: ${PURPLE}Happy coding! 🎉${RESET}\n"
 

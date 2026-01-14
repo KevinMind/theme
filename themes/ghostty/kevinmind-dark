@@ -7,6 +7,7 @@ cursor-color = ffffff
 cursor-text = 0a0f15
 selection-background = 5a6a7a
 selection-foreground = ffffff
+split-divider-color = ffffff
 
 # Normal colors (0-7)
 palette = 0=#000000
