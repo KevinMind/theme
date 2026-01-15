@@ -1,0 +1,20 @@
+{
+  "name": "Cursor Editor",
+  "description": "Configure Cursor IDE settings and keybindings",
+  "dependencies": ["homebrew"],
+  "variables": {},
+  "files": [
+    {
+      "path": "Library/Application Support/Cursor/User/settings.json",
+      "strategy": "jq-merge",
+      "jq_path": ".",
+      "description": "Cursor editor settings (merged with existing)"
+    },
+    {
+      "path": "Library/Application Support/Cursor/User/keybindings.json",
+      "strategy": "replace",
+      "description": "Cursor keyboard shortcuts"
+    }
+  ],
+  "platforms": ["darwin"]
+}

@@ -1,0 +1,8 @@
+{
+  "name": "ZSH Configuration",
+  "description": "Configure ZSH shell with Ghostty and gcloud integration",
+  "dependencies": ["homebrew"],
+  "variables": {},
+  "files": [],
+  "platforms": ["darwin", "linux"]
+}

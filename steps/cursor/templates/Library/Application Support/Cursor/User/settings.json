@@ -1,0 +1,19 @@
+{
+  "window.commandCenter": true,
+  "workbench.preferredLightColorTheme": "Kevinmind Light",
+  "workbench.preferredDarkColorTheme": "Kevinmind Dark",
+  "workbench.colorTheme": "Kevinmind Dark",
+  "cursor.cpp.enablePartialAccepts": true,
+  "workbench.sideBar.location": "right",
+  "cursor.enable_agent_window_setting": true,
+  "git.autofetch": true,
+  "cursor.agent_layout_browser_beta_setting": true,
+  "window.autoDetectColorScheme": true,
+  "git.openRepositoryInParentFolders": "always",
+  "diffEditor.ignoreTrimWhitespace": false,
+  "claudeCode.preferredLocation": "sidebar",
+  "workbench.editor.enablePreview": false,
+  "claudeCode.disableLoginPrompt": true,
+  "claudeCode.initialPermissionMode": "plan",
+  "claudeCode.useTerminal": true
+}

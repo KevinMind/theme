@@ -9,8 +9,9 @@ jobs:
   package-and-release:
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # Required for committing/pushing and creating releases
-
+      contents: write
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -27,6 +28,48 @@ jobs:
           cache: 'pnpm'
 
       - name: Package and release the theme
+        id: release
         run: ./build.sh --release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-cli:
+    runs-on: macos-latest
+    needs: package-and-release
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install CLI dependencies
+        run: cd cli && bun install
+
+      - name: Build CLI binaries
+        run: |
+          cd cli
+          mkdir -p ../dist
+          bun build --compile --target=bun-darwin-arm64 ./src/index.ts --outfile ../dist/booti-darwin-arm64
+          bun build --compile --target=bun-darwin-x64 ./src/index.ts --outfile ../dist/booti-darwin-x64
+
+      - name: Get latest release tag
+        id: get_release
+        run: |
+          LATEST_TAG=$(gh release list --limit 1 --json tagName -q '.[0].tagName')
+          echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload CLI binaries to release
+        run: |
+          gh release upload ${{ steps.get_release.outputs.tag }} \
+            dist/booti-darwin-arm64 \
+            dist/booti-darwin-x64 \
+            --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,14 @@
+{
+  "name": "Ghostty Terminal",
+  "description": "Configure Ghostty terminal emulator",
+  "dependencies": ["homebrew"],
+  "variables": {},
+  "files": [
+    {
+      "path": "Library/Application Support/com.mitchellh.ghostty/config",
+      "strategy": "replace",
+      "description": "Ghostty terminal configuration"
+    }
+  ],
+  "platforms": ["darwin"]
+}

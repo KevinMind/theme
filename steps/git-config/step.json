@@ -1,0 +1,19 @@
+{
+  "name": "Git Configuration",
+  "description": "Configure Git user settings",
+  "dependencies": ["homebrew"],
+  "variables": {
+    "GIT_NAME": {
+      "type": "string",
+      "description": "Your full name for Git commits",
+      "required": true
+    },
+    "GIT_EMAIL": {
+      "type": "string",
+      "description": "Your email for Git commits",
+      "required": true
+    }
+  },
+  "files": [],
+  "platforms": ["darwin", "linux"]
+}

@@ -1,0 +1,8 @@
+{
+  "name": "Xcode Command Line Tools",
+  "description": "Install Xcode Command Line Tools for development",
+  "dependencies": [],
+  "variables": {},
+  "files": [],
+  "platforms": ["darwin"]
+}

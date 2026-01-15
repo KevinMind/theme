@@ -1,0 +1,14 @@
+{
+  "name": "Homebrew",
+  "description": "Install Homebrew and packages from Brewfile",
+  "dependencies": [],
+  "variables": {},
+  "files": [
+    {
+      "path": ".Brewfile",
+      "strategy": "replace",
+      "description": "Homebrew bundle file"
+    }
+  ],
+  "platforms": ["darwin"]
+}

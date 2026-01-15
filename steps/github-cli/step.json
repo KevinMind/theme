@@ -1,0 +1,14 @@
+{
+  "name": "GitHub CLI",
+  "description": "Authenticate GitHub CLI for repository operations",
+  "dependencies": ["homebrew"],
+  "variables": {
+    "GITHUB_TOKEN": {
+      "type": "secret",
+      "description": "GitHub personal access token (optional, will use browser auth if not provided)",
+      "required": false
+    }
+  },
+  "files": [],
+  "platforms": ["darwin", "linux"]
+}

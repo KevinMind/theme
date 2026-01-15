@@ -1,0 +1,8 @@
+{
+  "name": "NVM",
+  "description": "Install Node Version Manager for Node.js management",
+  "dependencies": [],
+  "variables": {},
+  "files": [],
+  "platforms": ["darwin", "linux"]
+}
