@@ -65,7 +65,6 @@ export interface CliOptions {
   quiet: boolean;
   gitName?: string;
   gitEmail?: string;
-  gtToken?: string;
   githubToken?: string;
 }
 

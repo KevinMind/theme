@@ -38,24 +38,23 @@ export async function runScript(
   const { chmod } = await import('fs/promises');
   await chmod(tmpScript, 0o755);
 
-  // Execute the script
+  // Execute the script with streaming output
   const proc = spawn({
     cmd: ['bash', tmpScript],
     cwd: cwd || process.cwd(),
     env: { ...process.env, ...env },
-    stdout: 'pipe',
-    stderr: 'pipe',
+    stdout: 'inherit',
+    stderr: 'inherit',
   });
 
-  const stdout = await new Response(proc.stdout).text();
-  const stderr = await new Response(proc.stderr).text();
   const exitCode = await proc.exited;
 
   // Cleanup temp file
   const { unlink } = await import('fs/promises');
   await unlink(tmpScript).catch(() => {});
 
-  return { exitCode, stdout, stderr };
+  // stdout/stderr are streamed directly to terminal, so we return empty strings
+  return { exitCode, stdout: '', stderr: '' };
 }
 
 /**

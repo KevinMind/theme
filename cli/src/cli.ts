@@ -1,4 +1,31 @@
+import { join, dirname } from 'path';
+import { readFileSync, existsSync } from 'fs';
 import type { CliOptions } from './types';
+
+/**
+ * Get the version from VERSION file (set at build time from GitHub release tag)
+ * Falls back to 'dev' for local development
+ */
+function getVersion(): string {
+  // Try to read VERSION file from the same directory as the binary
+  const versionPaths = [
+    join(dirname(process.execPath), 'VERSION'),  // Next to binary (production)
+    join(process.cwd(), 'VERSION'),               // Current working directory
+    join(dirname(import.meta.path), '..', '..', 'VERSION'),  // Relative to source (dev)
+  ];
+
+  for (const versionPath of versionPaths) {
+    if (existsSync(versionPath)) {
+      try {
+        return readFileSync(versionPath, 'utf-8').trim();
+      } catch {
+        // Continue to next path
+      }
+    }
+  }
+
+  return 'dev';
+}
 
 const HELP_TEXT = `
 Usage: booti [command] [options]
@@ -19,7 +46,6 @@ Options:
   --quiet               Suppress non-essential output
   --git-name <name>     Set the git user name
   --git-email <email>   Set the git user email
-  --gt-token <token>    Set the Graphite auth token
   --github-token <token> Set the GitHub auth token
   --help                Show this help message
   --version             Show version number
@@ -30,12 +56,10 @@ Examples:
   booti --steps homebrew,cursor      # Run specific steps
   booti --backup                     # Backup local files to templates
   booti --backup --dry-run           # Preview backup changes
-  booti --no-input --git-name "Kevin" --git-email "kevin@example.com"
+  booti --no-input --git-name "Kevin" --git-email "user@example.com"
   booti push                         # Sync local configs to repo
   booti push --dry-run               # Preview what would be synced
 `;
-
-const VERSION = '1.0.0';
 
 export function parseArgs(argv: string[]): CliOptions {
   const options: CliOptions = {
@@ -104,13 +128,6 @@ export function parseArgs(argv: string[]): CliOptions {
         }
         break;
 
-      case '--gt-token':
-        if (nextArg) {
-          options.gtToken = nextArg;
-          i++;
-        }
-        break;
-
       case '--github-token':
         if (nextArg) {
           options.githubToken = nextArg;
@@ -145,7 +162,7 @@ export function printHelp(): void {
 }
 
 export function printVersion(): void {
-  console.log(`booti v${VERSION}`);
+  console.log(`booti ${getVersion()}`);
 }
 
 /**
@@ -156,7 +173,6 @@ export function buildVariableOverrides(options: CliOptions): Record<string, stri
 
   if (options.gitName) overrides.GIT_NAME = options.gitName;
   if (options.gitEmail) overrides.GIT_EMAIL = options.gitEmail;
-  if (options.gtToken) overrides.GRAPHITE_TOKEN = options.gtToken;
   if (options.githubToken) overrides.GITHUB_TOKEN = options.githubToken;
 
   return overrides;

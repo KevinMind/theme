@@ -47,6 +47,14 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Get latest release tag
+        id: get_release
+        run: |
+          LATEST_TAG=$(gh release list --limit 1 --json tagName -q '.[0].tagName')
+          echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Install CLI dependencies
         run: cd cli && bun install
 
@@ -54,6 +62,8 @@ jobs:
         run: |
           cd cli
           mkdir -p ../dist
+          # Write version file for the CLI to read
+          echo "${{ steps.get_release.outputs.tag }}" > ../VERSION
           bun build --compile --target=bun-darwin-arm64 ./src/index.ts --outfile ../dist/booti-darwin-arm64
           bun build --compile --target=bun-darwin-x64 ./src/index.ts --outfile ../dist/booti-darwin-x64
 
@@ -71,22 +81,16 @@ jobs:
           chmod +x dist/booti-darwin-arm64-package/booti
           chmod +x dist/booti-darwin-x64-package/booti
 
-          # Copy steps directory
+          # Copy steps directory and VERSION file
           cp -r steps dist/booti-darwin-arm64-package/
           cp -r steps dist/booti-darwin-x64-package/
+          cp VERSION dist/booti-darwin-arm64-package/
+          cp VERSION dist/booti-darwin-x64-package/
 
           # Create tar.gz archives
           cd dist
           tar -czvf booti-darwin-arm64.tar.gz -C booti-darwin-arm64-package .
           tar -czvf booti-darwin-x64.tar.gz -C booti-darwin-x64-package .
-
-      - name: Get latest release tag
-        id: get_release
-        run: |
-          LATEST_TAG=$(gh release list --limit 1 --json tagName -q '.[0].tagName')
-          echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload CLI packages to release
         run: |
