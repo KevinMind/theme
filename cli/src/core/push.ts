@@ -165,10 +165,12 @@ export interface PushOptions {
  *
  * Simple flow:
  * 1. Verify we're in the booti repo
- * 2. Checkout main (fail if dirty)
- * 3. Create new branch
- * 4. Copy sanitized local files to templates
- * 5. Show status and let user handle the rest
+ * 2. Check git status is clean
+ * 3. Discover config files and validate there's work to do
+ * 4. Checkout main and pull latest
+ * 5. Create new branch
+ * 6. Copy sanitized local files to templates
+ * 7. Show status and let user handle the rest
  */
 export async function pushLocalConfig(options: PushOptions = {}): Promise<void> {
   const { dryRun = false } = options;
@@ -203,24 +205,54 @@ export async function pushLocalConfig(options: PushOptions = {}): Promise<void> 
   }
   logger.success('Working directory is clean');
 
-  // Step 3: Checkout main and pull latest
+  // Step 3: Discover config files and validate there's work to do (before creating branch)
   console.log();
-  logger.info('Checking out main branch...');
+  logger.info('Discovering config files...');
+  const fileConfigs = await discoverFileConfigs(stepsDir);
 
-  const checkoutResult = await exec('git', ['checkout', 'main'], { cwd: repoDir });
-  if (!checkoutResult.success) {
-    logger.error(`Failed to checkout main: ${checkoutResult.stderr}`);
-    process.exit(1);
+  if (fileConfigs.length === 0) {
+    logger.warning('No config files found in step definitions.');
+    return;
   }
 
-  const pullResult = await exec('git', ['pull', '--ff-only'], { cwd: repoDir });
-  if (!pullResult.success) {
-    logger.warning(`Could not pull latest: ${pullResult.stderr}`);
+  // Check if any local files exist before proceeding
+  const existingLocalFiles: StepFileConfig[] = [];
+  for (const config of fileConfigs) {
+    const localPath = join(homedir(), config.fileConfig.path);
+    if (await isFile(localPath)) {
+      existingLocalFiles.push(config);
+    }
+  }
+
+  if (existingLocalFiles.length === 0) {
+    logger.warning('No local config files found to sync.');
+    return;
+  }
+
+  logger.info(`Found ${fileConfigs.length} config file mapping(s), ${existingLocalFiles.length} local file(s)`);
+
+  // Step 4: Checkout main and pull latest
+  console.log();
+  if (dryRun) {
+    logger.dryRun('Would checkout main branch and pull latest');
   } else {
-    logger.success('Pulled latest from main');
+    logger.info('Checking out main branch...');
+
+    const checkoutResult = await exec('git', ['checkout', 'main'], { cwd: repoDir });
+    if (!checkoutResult.success) {
+      logger.error(`Failed to checkout main: ${checkoutResult.stderr}`);
+      process.exit(1);
+    }
+
+    const pullResult = await exec('git', ['pull', '--ff-only'], { cwd: repoDir });
+    if (!pullResult.success) {
+      logger.warning(`Could not pull latest: ${pullResult.stderr}`);
+    } else {
+      logger.success('Pulled latest from main');
+    }
   }
 
-  // Step 4: Create new branch
+  // Step 5: Create new branch
   const branchName = createBranchName();
   console.log();
   logger.info(`Creating branch: ${branchName}`);
@@ -235,18 +267,6 @@ export async function pushLocalConfig(options: PushOptions = {}): Promise<void> 
     }
     logger.success(`On branch: ${branchName}`);
   }
-
-  // Step 5: Copy local files to templates (with sanitization)
-  console.log();
-  logger.info('Discovering config files...');
-  const fileConfigs = await discoverFileConfigs(stepsDir);
-
-  if (fileConfigs.length === 0) {
-    logger.warning('No config files found in step definitions.');
-    return;
-  }
-
-  logger.info(`Found ${fileConfigs.length} config file mapping(s)`);
   console.log('');
 
   logger.info('Copying local files to templates...');
