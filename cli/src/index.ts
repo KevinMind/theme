@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 import { homedir } from 'os';
 import { dirname, join } from 'path';
+import chalk from 'chalk';
 import { parseArgs, buildVariableOverrides } from './cli';
 import { discoverSteps, findStepsDir } from './core/discovery';
 import { buildDependencyGraph, getStepById } from './core/dependencies';
@@ -9,6 +10,7 @@ import { executeSteps } from './core/executor';
 import { createLogger } from './core/logger';
 import { extractVariablesFromExistingFiles } from './core/extraction';
 import { runBackup } from './core/backup';
+import { pushLocalConfig } from './core/push';
 
 async function main(): Promise<void> {
   // Parse CLI arguments
@@ -19,6 +21,17 @@ async function main(): Promise<void> {
     quiet: options.quiet,
     verbose: options.verbose,
   });
+
+  // Handle push subcommand
+  if (options.subcommand === 'push') {
+    console.log(chalk.green('Booti') + ' Push - Sync Local Config to Repo\n');
+    await pushLocalConfig({
+      dryRun: options.dryRun,
+      quiet: options.quiet,
+      verbose: options.verbose,
+    });
+    process.exit(0);
+  }
 
   // Show banner
   if (!options.list) {

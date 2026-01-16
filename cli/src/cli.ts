@@ -1,9 +1,13 @@
 import type { CliOptions } from './types';
 
 const HELP_TEXT = `
-Usage: booti [options]
+Usage: booti [command] [options]
 
 Bootstrap your macOS development environment.
+
+Commands:
+  (default)             Run setup steps to configure your environment
+  push                  Push local config files back to the repo via PR
 
 Options:
   --dry-run             Run in dry-run mode, no changes will be made
@@ -27,12 +31,15 @@ Examples:
   booti --backup                     # Backup local files to templates
   booti --backup --dry-run           # Preview backup changes
   booti --no-input --git-name "Kevin" --git-email "kevin@example.com"
+  booti push                         # Sync local configs to repo
+  booti push --dry-run               # Preview what would be synced
 `;
 
 const VERSION = '1.0.0';
 
 export function parseArgs(argv: string[]): CliOptions {
   const options: CliOptions = {
+    subcommand: 'run',
     dryRun: false,
     noInput: false,
     list: false,
@@ -48,6 +55,10 @@ export function parseArgs(argv: string[]): CliOptions {
     const nextArg = args[i + 1];
 
     switch (arg) {
+      case 'push':
+        options.subcommand = 'push';
+        break;
+
       case '--dry-run':
         options.dryRun = true;
         break;
