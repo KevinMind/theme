@@ -73,11 +73,25 @@ export async function loadStepConfig(stepDir: string): Promise<DiscoveredStep> {
  * Find the steps directory relative to the CLI
  */
 export async function findStepsDir(cliDir: string): Promise<string> {
+  // Check for environment variable override first
+  if (process.env.BOOTI_STEPS_DIR) {
+    const envDir = process.env.BOOTI_STEPS_DIR;
+    if (await isDirectory(envDir)) {
+      return envDir;
+    }
+    logger.warning(`BOOTI_STEPS_DIR set but not found: ${envDir}`);
+  }
+
+  // For compiled binaries, use the executable path
+  const execDir = join(process.execPath, '..');
+
   // Try common locations
   const candidates = [
     join(cliDir, '..', 'steps'),        // ../steps from cli/src/
     join(cliDir, '..', '..', 'steps'),  // ../../steps from cli/src/ (dev mode)
-    join(cliDir, 'steps'),               // ./steps same directory (compiled)
+    join(cliDir, 'steps'),               // ./steps same directory
+    join(execDir, 'steps'),              // ./steps relative to binary
+    join(execDir, '..', 'steps'),        // ../steps relative to binary
   ];
 
   for (const candidate of candidates) {

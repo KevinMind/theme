@@ -57,6 +57,25 @@ jobs:
           bun build --compile --target=bun-darwin-arm64 ./src/index.ts --outfile ../dist/booti-darwin-arm64
           bun build --compile --target=bun-darwin-x64 ./src/index.ts --outfile ../dist/booti-darwin-x64
 
+      - name: Package CLI with steps
+        run: |
+          # Create release packages with binary and steps directory
+          mkdir -p dist/booti-darwin-arm64-package
+          mkdir -p dist/booti-darwin-x64-package
+
+          # Copy binaries
+          cp dist/booti-darwin-arm64 dist/booti-darwin-arm64-package/booti
+          cp dist/booti-darwin-x64 dist/booti-darwin-x64-package/booti
+
+          # Copy steps directory
+          cp -r steps dist/booti-darwin-arm64-package/
+          cp -r steps dist/booti-darwin-x64-package/
+
+          # Create tar.gz archives
+          cd dist
+          tar -czvf booti-darwin-arm64.tar.gz -C booti-darwin-arm64-package .
+          tar -czvf booti-darwin-x64.tar.gz -C booti-darwin-x64-package .
+
       - name: Get latest release tag
         id: get_release
         run: |
@@ -65,11 +84,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Upload CLI binaries to release
+      - name: Upload CLI packages to release
         run: |
           gh release upload ${{ steps.get_release.outputs.tag }} \
-            dist/booti-darwin-arm64 \
-            dist/booti-darwin-x64 \
+            dist/booti-darwin-arm64.tar.gz \
+            dist/booti-darwin-x64.tar.gz \
             --clobber
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
