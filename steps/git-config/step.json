@@ -14,6 +14,12 @@
       "required": true
     }
   },
-  "files": [],
+  "files": [
+    {
+      "path": ".gitconfig",
+      "strategy": "replace",
+      "description": "Git configuration file"
+    }
+  ],
   "platforms": ["darwin", "linux"]
 }
