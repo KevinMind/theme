@@ -79,10 +79,6 @@ export async function executeStep(
         cwd: step.directory,
       });
 
-      // Output script results
-      if (result.stdout) console.log(result.stdout);
-      if (result.stderr) console.error(result.stderr);
-
       if (result.exitCode !== 0) {
         return {
           step: step.id,
@@ -112,10 +108,6 @@ export async function executeStep(
         env,
         cwd: step.directory,
       });
-
-      // Output script results
-      if (result.stdout) console.log(result.stdout);
-      if (result.stderr) console.error(result.stderr);
 
       if (result.exitCode !== 0) {
         return {
