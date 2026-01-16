@@ -23,10 +23,10 @@ Bootstrap your macOS development environment with a single command.
 
 ```bash
 # Apple Silicon (M1/M2/M3)
-gh release download --repo KevinMind/theme --pattern 'booti-darwin-arm64' --output ~/.local/bin/booti && chmod +x ~/.local/bin/booti
+gh release download --repo KevinMind/theme --pattern 'booti-darwin-arm64.tar.gz' --output - | tar -xz -C ~/.local/bin
 
 # Intel Mac
-gh release download --repo KevinMind/theme --pattern 'booti-darwin-x64' --output ~/.local/bin/booti && chmod +x ~/.local/bin/booti
+gh release download --repo KevinMind/theme --pattern 'booti-darwin-x64.tar.gz' --output - | tar -xz -C ~/.local/bin
 ```
 
 Make sure `~/.local/bin` is in your PATH:
