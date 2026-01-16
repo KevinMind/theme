@@ -67,6 +67,10 @@ jobs:
           cp dist/booti-darwin-arm64 dist/booti-darwin-arm64-package/booti
           cp dist/booti-darwin-x64 dist/booti-darwin-x64-package/booti
 
+          # Ensure binaries are executable
+          chmod +x dist/booti-darwin-arm64-package/booti
+          chmod +x dist/booti-darwin-x64-package/booti
+
           # Copy steps directory
           cp -r steps dist/booti-darwin-arm64-package/
           cp -r steps dist/booti-darwin-x64-package/
