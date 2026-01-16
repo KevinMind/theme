@@ -3,11 +3,9 @@ import { join, dirname } from 'path';
 import chalk from 'chalk';
 import { exec } from '../utils/exec';
 import { isFile, readText, writeText, ensureDir, readJson } from '../utils/fs';
-import { createLogger } from './logger';
+import { createLogger, type Logger } from './logger';
 import type { FileConfig } from '../schemas/step';
 import { StepSchema } from '../schemas/step';
-
-const logger = createLogger();
 
 /**
  * Find all placeholder locations in a JSON object
@@ -91,11 +89,17 @@ export function sanitizeWithTemplate(
     const localValue = getAtPath(localJson, path);
 
     if (localValue !== undefined && localValue !== placeholder && typeof localValue === 'string') {
-      setAtPath(localJson, path, placeholder);
+      // Handle root-level placeholders (empty path) - can't use setAtPath on primitives
+      if (path.length === 0) {
+        localJson = placeholder;
+      } else {
+        setAtPath(localJson, path, placeholder);
+      }
       const displayValue = localValue.length > 20
         ? `${localValue.slice(0, 8)}...${localValue.slice(-4)}`
         : localValue;
-      replacements.push(`${path.join('.')}: "${displayValue}" → "${placeholder}"`);
+      const pathDisplay = path.length === 0 ? '(root)' : path.join('.');
+      replacements.push(`${pathDisplay}: "${displayValue}" → "${placeholder}"`);
     }
   }
 
@@ -158,6 +162,8 @@ function createBranchName(): string {
 
 export interface PushOptions {
   dryRun?: boolean;
+  quiet?: boolean;
+  verbose?: boolean;
 }
 
 /**
@@ -173,7 +179,8 @@ export interface PushOptions {
  * 7. Show status and let user handle the rest
  */
 export async function pushLocalConfig(options: PushOptions = {}): Promise<void> {
-  const { dryRun = false } = options;
+  const { dryRun = false, quiet = false, verbose = false } = options;
+  const logger = createLogger({ quiet, verbose });
 
   // Step 1: Verify we're in a git repo
   const gitRoot = await exec('git', ['rev-parse', '--show-toplevel']);
@@ -327,7 +334,12 @@ export async function pushLocalConfig(options: PushOptions = {}): Promise<void> 
 
   console.log('');
 
-  // Step 6: Show git status
+  // Step 6: Show git status (skip in dry-run since no files were written)
+  if (dryRun) {
+    console.log(`${chalk.bold.green('Done!')} Dry-run complete. ${copiedFiles.length} file(s) would be synced.`);
+    return;
+  }
+
   logger.info('Changes:');
   const diffStat = await exec('git', ['diff', '--stat'], { cwd: repoDir });
   if (diffStat.stdout.trim()) {

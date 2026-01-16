@@ -25,7 +25,11 @@ async function main(): Promise<void> {
   // Handle push subcommand
   if (options.subcommand === 'push') {
     console.log(chalk.green('Booti') + ' Push - Sync Local Config to Repo\n');
-    await pushLocalConfig({ dryRun: options.dryRun });
+    await pushLocalConfig({
+      dryRun: options.dryRun,
+      quiet: options.quiet,
+      verbose: options.verbose,
+    });
     process.exit(0);
   }
 
