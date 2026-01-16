@@ -55,6 +55,7 @@ export interface SyncOptions {
 }
 
 export interface CliOptions {
+  subcommand: 'run' | 'push';
   dryRun: boolean;
   noInput: boolean;
   steps?: string[];
