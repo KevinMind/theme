@@ -1,5 +1,5 @@
 import { createInterface } from 'readline';
-import type { DiscoveredStep, CollectedVariables } from '../types';
+import type { DiscoveredStep, CollectedVariables, ExtractedValue } from '../types';
 import type { Variable } from '../schemas/step';
 import { logger } from './logger';
 
@@ -39,10 +39,10 @@ export function collectVariableDefinitions(
 export async function promptForVariables(
   variableDefs: Map<string, { variable: Variable; usedBy: string[] }>,
   existingValues: Record<string, string> = {},
-  options: { noInput?: boolean } = {}
+  options: { noInput?: boolean; extractedValues?: Map<string, ExtractedValue> } = {}
 ): Promise<CollectedVariables> {
   const collected: CollectedVariables = {};
-  const { noInput = false } = options;
+  const { noInput = false, extractedValues } = options;
 
   for (const [varName, { variable, usedBy }] of variableDefs) {
     // Check if we already have a value (from CLI args or environment)
@@ -57,8 +57,19 @@ export async function promptForVariables(
       continue;
     }
 
-    // In no-input mode, use default or empty string
+    // Check for extracted value from local files
+    const extracted = extractedValues?.get(varName);
+
+    // In no-input mode, use extracted value, default, or empty string
     if (noInput) {
+      if (extracted) {
+        collected[varName] = {
+          value: extracted.value,
+          source: 'extracted',
+          variable,
+        };
+        continue;
+      }
       if (variable.required && !variable.default) {
         logger.warning(`Variable ${varName} is required but no value provided`);
       }
@@ -70,11 +81,11 @@ export async function promptForVariables(
       continue;
     }
 
-    // Interactive prompt
-    const value = await promptVariable(varName, variable);
+    // Interactive prompt with extracted value hint
+    const value = await promptVariable(varName, variable, extracted);
     collected[varName] = {
       value,
-      source: 'prompt',
+      source: value === extracted?.value ? 'extracted' : 'prompt',
       variable,
     };
   }
@@ -85,20 +96,39 @@ export async function promptForVariables(
 /**
  * Prompt for a single variable value
  */
-async function promptVariable(name: string, variable: Variable): Promise<string> {
+async function promptVariable(
+  name: string,
+  variable: Variable,
+  extracted?: ExtractedValue
+): Promise<string> {
   const rl = createInterface({
     input: process.stdin,
     output: process.stdout,
   });
 
   return new Promise((resolve) => {
-    const defaultHint = variable.default ? ` (default: ${variable.default})` : '';
-    const typeHint = variable.type === 'secret' ? ' [hidden]' : '';
-    const prompt = `\n${variable.description}${typeHint}${defaultHint}\n${name}: `;
+    // Build hint text based on context
+    let hint = '';
+    let fallbackValue = variable.default || '';
+
+    if (extracted) {
+      // Show extracted value hint
+      if (extracted.isSecret) {
+        hint = ' [value exists - press Enter to keep]';
+      } else {
+        hint = ` [current: ${extracted.value}] - Enter to keep`;
+      }
+      fallbackValue = extracted.value;
+    } else if (variable.default) {
+      hint = ` (default: ${variable.default})`;
+    }
+
+    const typeHint = variable.type === 'secret' ? ' [secret]' : '';
+    const prompt = `\n${variable.description}${typeHint}${hint}\n${name}: `;
 
     rl.question(prompt, (answer) => {
       rl.close();
-      resolve(answer.trim() || variable.default || '');
+      resolve(answer.trim() || fallbackValue);
     });
   });
 }

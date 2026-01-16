@@ -59,12 +59,58 @@ export interface CliOptions {
   noInput: boolean;
   steps?: string[];
   list: boolean;
+  backup: boolean;
   verbose: boolean;
   quiet: boolean;
   gitName?: string;
   gitEmail?: string;
   gtToken?: string;
   githubToken?: string;
+}
+
+// Extraction types
+export interface ExtractedValue {
+  /** The extracted value */
+  value: string;
+  /** Source file path where the value was extracted from */
+  source: string;
+  /** Whether the variable is a secret type */
+  isSecret: boolean;
+}
+
+export interface VariableMatch {
+  /** The variable name (without ${}) */
+  name: string;
+  /** Start index in the template string */
+  startIndex: number;
+  /** End index in the template string */
+  endIndex: number;
+}
+
+// Backup types
+export interface BackupResult {
+  /** File path that was processed */
+  path: string;
+  /** Whether the file was changed */
+  changed: boolean;
+  /** Error message if backup failed */
+  error?: string;
+}
+
+export interface BackupSummary {
+  /** Number of files that were updated */
+  filesUpdated: number;
+  /** Number of files that were skipped (no changes) */
+  filesSkipped: number;
+  /** List of errors encountered */
+  errors: string[];
+}
+
+export interface BackupOptions {
+  /** Whether to run in dry-run mode */
+  dryRun: boolean;
+  /** Home directory path */
+  homeDir: string;
 }
 
 export type { Step, Variable, FileConfig };

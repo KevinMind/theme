@@ -10,6 +10,7 @@ Options:
   --no-input            Run in non-interactive mode, using defaults
   --steps <steps>       Run only specified steps (comma-separated)
   --list                List all available steps and exit
+  --backup              Sync local files back to repo templates
   --verbose             Show detailed output
   --quiet               Suppress non-essential output
   --git-name <name>     Set the git user name
@@ -23,6 +24,8 @@ Examples:
   booti                              # Interactive bootstrap
   booti --dry-run                    # Preview changes
   booti --steps homebrew,cursor      # Run specific steps
+  booti --backup                     # Backup local files to templates
+  booti --backup --dry-run           # Preview backup changes
   booti --no-input --git-name "Kevin" --git-email "kevin@example.com"
 `;
 
@@ -33,6 +36,7 @@ export function parseArgs(argv: string[]): CliOptions {
     dryRun: false,
     noInput: false,
     list: false,
+    backup: false,
     verbose: false,
     quiet: false,
   };
@@ -61,6 +65,10 @@ export function parseArgs(argv: string[]): CliOptions {
 
       case '--list':
         options.list = true;
+        break;
+
+      case '--backup':
+        options.backup = true;
         break;
 
       case '--verbose':

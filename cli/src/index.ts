@@ -7,6 +7,8 @@ import { buildDependencyGraph, getStepById } from './core/dependencies';
 import { collectVariableDefinitions, promptForVariables } from './core/variables';
 import { executeSteps } from './core/executor';
 import { createLogger } from './core/logger';
+import { extractVariablesFromExistingFiles } from './core/extraction';
+import { runBackup } from './core/backup';
 
 async function main(): Promise<void> {
   // Parse CLI arguments
@@ -55,6 +57,31 @@ async function main(): Promise<void> {
     process.exit(0);
   }
 
+  // Backup mode - sync local files back to templates
+  if (options.backup) {
+    log.info('Starting backup...');
+    if (options.dryRun) {
+      log.warning('Running in DRY RUN mode - no changes will be made');
+    }
+
+    const summary = await runBackup(steps, {
+      dryRun: options.dryRun,
+      homeDir: homedir(),
+    });
+
+    console.log('\n' + '='.repeat(50));
+    if (summary.errors.length === 0) {
+      log.success(
+        `Backup complete! ${summary.filesUpdated} files updated, ${summary.filesSkipped} skipped.`
+      );
+    } else {
+      log.warning(
+        `Backup finished with ${summary.errors.length} errors. ${summary.filesUpdated} files updated, ${summary.filesSkipped} skipped.`
+      );
+    }
+    process.exit(summary.errors.length > 0 ? 1 : 0);
+  }
+
   // Build dependency graph
   const { order, autoIncluded } = buildDependencyGraph(steps, options.steps);
 
@@ -76,8 +103,20 @@ async function main(): Promise<void> {
   const variableDefs = collectVariableDefinitions(steps, order);
   const overrides = buildVariableOverrides(options);
 
+  // Extract existing values from local files for smart prompting
+  const extractedValues = await extractVariablesFromExistingFiles(
+    steps,
+    variableDefs,
+    homedir()
+  );
+
+  if (extractedValues.size > 0 && !options.quiet) {
+    log.info(`Found ${extractedValues.size} existing variable values from local files`);
+  }
+
   const variables = await promptForVariables(variableDefs, overrides, {
     noInput: options.noInput,
+    extractedValues,
   });
 
   // Execute steps
