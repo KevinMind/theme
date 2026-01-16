@@ -1,6 +1,5 @@
 # Taps
 tap "xcodesorg/made"
-tap "withgraphite/tap"
 
 # Formulae
 brew "cjson"
@@ -10,7 +9,6 @@ brew "ffmpeg"
 brew "fizz"
 brew "gettext"
 brew "gh"
-brew "withgraphite/tap/graphite"
 brew "jq"
 brew "mysql-client@8.0"
 brew "npm"

@@ -54,7 +54,6 @@ The CLI sets up:
 - **NVM** - Node.js version manager
 - **Git** - User configuration
 - **GitHub CLI** - Authentication
-- **Graphite CLI** - Stacked PRs workflow
 - **ZSH** - Shell configuration
 
 ### Development

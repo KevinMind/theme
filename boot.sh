@@ -13,7 +13,6 @@
 #   --no-input            Run in non-interactive mode, using defaults or arguments.
 #   --git-name "Name"     Set the git user name.
 #   --git-email "Email"    Set the git user email.
-#   --gt-token "Token"    Set the Graphite auth token.
 #   --github-token "Token" Set the GitHub auth token.
 #
 # Prerequisites: macOS
@@ -111,7 +110,6 @@ NO_INPUT=false
 # Get existing git config or set to empty string. Arguments will override this.
 GIT_NAME=$(git config --global user.name || echo "")
 GIT_EMAIL=$(git config --global user.email || echo "")
-ARG_GT_TOKEN=""
 ARG_GITHUB_TOKEN=""
 
 while [[ $# -gt 0 ]]; do
@@ -130,10 +128,6 @@ while [[ $# -gt 0 ]]; do
       ;;
     --git-email)
       GIT_EMAIL="$2"
-      shift 2
-      ;;
-    --gt-token)
-      ARG_GT_TOKEN="$2"
       shift 2
       ;;
     --github-token)
@@ -239,7 +233,6 @@ if not_dry "Creating ${BREW_FILE}..."; then
 cat << "EOF" > "${BREW_FILE}"
 # Taps
 tap "xcodesorg/made"
-tap "withgraphite/tap"
 
 # Formulae
 brew "cjson"
@@ -249,7 +242,6 @@ brew "ffmpeg"
 brew "fizz"
 brew "gettext"
 brew "gh"
-brew "withgraphite/tap/graphite"
 brew "jq"
 brew "mysql-client@8.0"
 brew "npm"
@@ -641,26 +633,6 @@ else
 fi
 
 # ============================================
-# Step 10: Authorize Graphite CLI
-# ============================================
-log_step "Authorizing Graphite CLI..."
-
-if ! command_exists gt; then
-    log_warning "Graphite CLI not found"
-    log_info "Install with: brew install withgraphite/tap/graphite"
-else
-    # Check if already authenticated
-    if gt auth --cwd "${HOME}" &>/dev/null; then
-        log_success "Graphite CLI already authenticated"
-    elif [[ "$NO_INPUT" == false ]]; then
-        log_info "Get your token from: https://app.graphite.com/activate"
-        log_info "Then run: gt auth --token <your-token>"
-    else
-        log_warning "Skipping Graphite CLI authentication (non-interactive mode)"
-    fi
-fi
-
-# ============================================
 # Final Steps
 # ============================================
 echo -e "\n${GREEN}════════════════════════════════════════${RESET}"
@@ -669,9 +641,8 @@ echo -e "${GREEN}═════════════════════
 
 log_info "Next steps:"
 echo -e "  ${CYAN}1.${RESET} Restart your terminal"
-echo -e "  ${CYAN}2.${RESET} Authenticate Graphite: gt auth --token <token>"
-echo -e "  ${CYAN}3.${RESET} Configure Cursor and other apps"
-echo -e "  ${CYAN}4.${RESET} Sign in to Slack, Chrome, and other apps"
+echo -e "  ${CYAN}2.${RESET} Configure Cursor and other apps"
+echo -e "  ${CYAN}3.${RESET} Sign in to Slack, Chrome, and other apps"
 
 echo -e "\n${GREEN}Booti${PURPLE}booti${RESET} says: ${PURPLE}Happy coding! 🎉${RESET}\n"
 
