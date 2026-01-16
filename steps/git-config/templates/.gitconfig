@@ -1,0 +1,7 @@
+[user]
+	name = ${GIT_NAME}
+	email = ${GIT_EMAIL}
+[core]
+	editor = cursor -w
+[http]
+	postBuffer = 524288000
