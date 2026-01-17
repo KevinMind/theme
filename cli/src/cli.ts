@@ -35,6 +35,7 @@ Bootstrap your macOS development environment.
 Commands:
   (default)             Run setup steps to configure your environment
   push                  Push local config files back to the repo via PR
+  upgrade               Download and install the latest booti release
 
 Options:
   --dry-run             Run in dry-run mode, no changes will be made
@@ -59,6 +60,7 @@ Examples:
   booti --no-input --git-name "Kevin" --git-email "user@example.com"
   booti push                         # Sync local configs to repo
   booti push --dry-run               # Preview what would be synced
+  booti upgrade                      # Upgrade to latest release
 `;
 
 export function parseArgs(argv: string[]): CliOptions {
@@ -81,6 +83,10 @@ export function parseArgs(argv: string[]): CliOptions {
     switch (arg) {
       case 'push':
         options.subcommand = 'push';
+        break;
+
+      case 'upgrade':
+        options.subcommand = 'upgrade';
         break;
 
       case '--dry-run':

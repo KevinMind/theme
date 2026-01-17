@@ -11,6 +11,7 @@ import { createLogger } from './core/logger';
 import { extractVariablesFromExistingFiles } from './core/extraction';
 import { runBackup } from './core/backup';
 import { pushLocalConfig } from './core/push';
+import { upgradeBooti } from './core/upgrade';
 
 async function main(): Promise<void> {
   // Parse CLI arguments
@@ -26,6 +27,17 @@ async function main(): Promise<void> {
   if (options.subcommand === 'push') {
     console.log(chalk.green('Booti') + ' Push - Sync Local Config to Repo\n');
     await pushLocalConfig({
+      dryRun: options.dryRun,
+      quiet: options.quiet,
+      verbose: options.verbose,
+    });
+    process.exit(0);
+  }
+
+  // Handle upgrade subcommand
+  if (options.subcommand === 'upgrade') {
+    console.log(chalk.green('Booti') + ' Upgrade - Install Latest Release\n');
+    await upgradeBooti({
       dryRun: options.dryRun,
       quiet: options.quiet,
       verbose: options.verbose,
