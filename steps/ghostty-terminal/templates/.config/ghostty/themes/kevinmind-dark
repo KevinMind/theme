@@ -1,0 +1,30 @@
+# Kevinmind Dark - Ghostty Theme
+# A minimal dark theme with muted, sophisticated colors
+
+background = 0a0f15
+foreground = ffffff
+cursor-color = ffffff
+cursor-text = 0a0f15
+selection-background = 5a6a7a
+selection-foreground = ffffff
+split-divider-color = ffffff
+
+# Normal colors (0-7)
+palette = 0=#000000
+palette = 1=#c86070
+palette = 2=#7aa88a
+palette = 3=#b89888
+palette = 4=#7a9ab8
+palette = 5=#8898c8
+palette = 6=#6a9aa8
+palette = 7=#e0e0e0
+
+# Bright colors (8-15)
+palette = 8=#808080
+palette = 9=#d86575
+palette = 10=#8aac76
+palette = 11=#e8a864
+palette = 12=#7a9aa2
+palette = 13=#9888c8
+palette = 14=#7aaaa2
+palette = 15=#ffffff

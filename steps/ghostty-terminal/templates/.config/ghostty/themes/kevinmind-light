@@ -1,0 +1,30 @@
+# Kevinmind Light - Ghostty Theme
+# A warm, cream-toned light theme with earthy accents
+
+background = f5f0e8
+foreground = 000000
+cursor-color = 000000
+cursor-text = f5f0e8
+selection-background = e8d4b8
+selection-foreground = 000000
+split-divider-color = 3a3a3a
+
+# Normal colors (0-7)
+palette = 0=#3a3a3a
+palette = 1=#c67979
+palette = 2=#8fa876
+palette = 3=#d4a574
+palette = 4=#5a7a82
+palette = 5=#9888b8
+palette = 6=#5a8a82
+palette = 7=#e5e5e5
+
+# Bright colors (8-15)
+palette = 8=#5a5a5a
+palette = 9=#d68989
+palette = 10=#9fb886
+palette = 11=#e4b584
+palette = 12=#7a9199
+palette = 13=#a898c8
+palette = 14=#87a8a0
+palette = 15=#f5f0e8

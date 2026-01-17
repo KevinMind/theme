@@ -5,9 +5,19 @@
   "variables": {},
   "files": [
     {
-      "path": "Library/Application Support/com.mitchellh.ghostty/config",
+      "path": ".config/ghostty/config",
       "strategy": "replace",
       "description": "Ghostty terminal configuration"
+    },
+    {
+      "path": ".config/ghostty/themes/kevinmind-dark",
+      "strategy": "replace",
+      "description": "Kevinmind dark theme for Ghostty"
+    },
+    {
+      "path": ".config/ghostty/themes/kevinmind-light",
+      "strategy": "replace",
+      "description": "Kevinmind light theme for Ghostty"
     }
   ],
   "platforms": ["darwin"]
