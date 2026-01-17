@@ -4,6 +4,7 @@ import {
   getAtPath,
   setAtPath,
   sanitizeWithTemplate,
+  sanitizeTextWithTemplate,
 } from '../core/push';
 
 describe('findPlaceholders', () => {
@@ -204,14 +205,32 @@ describe('sanitizeWithTemplate', () => {
     expect(replacements).toHaveLength(0);
   });
 
-  test('returns original content for non-JSON', () => {
+  test('uses text-based sanitization for non-JSON with no placeholders', () => {
     const template = 'not json';
     const local = 'also not json';
 
     const { sanitized, replacements } = sanitizeWithTemplate(local, template);
 
+    // Text sanitization returns as-is when no placeholders exist
     expect(sanitized).toBe(local);
     expect(replacements).toHaveLength(0);
+  });
+
+  test('uses text-based sanitization for non-JSON with placeholders', () => {
+    const template = `[user]
+\tname = \${GIT_NAME}
+\temail = \${GIT_EMAIL}`;
+    const local = `[user]
+\tname = Kevin Meinhardt
+\temail = kevin@example.com`;
+
+    const { sanitized, replacements } = sanitizeWithTemplate(local, template);
+
+    expect(sanitized).toContain('${GIT_NAME}');
+    expect(sanitized).toContain('${GIT_EMAIL}');
+    expect(sanitized).not.toContain('Kevin Meinhardt');
+    expect(sanitized).not.toContain('kevin@example.com');
+    expect(replacements).toHaveLength(2);
   });
 
   test('handles extra fields in local that are not in template', () => {
@@ -248,5 +267,79 @@ describe('sanitizeWithTemplate', () => {
     expect(result.token).toBe('${MY_TOKEN}');
     expect(result.other).toBeUndefined();
     expect(replacements).toHaveLength(1); // Only token was replaced
+  });
+});
+
+describe('sanitizeTextWithTemplate', () => {
+  test('restores placeholders in gitconfig-style file', () => {
+    const template = `[user]
+\tname = \${GIT_NAME}
+\temail = \${GIT_EMAIL}
+[core]
+\teditor = vim`;
+    const local = `[user]
+\tname = John Doe
+\temail = john@example.com
+[core]
+\teditor = vim`;
+
+    const { sanitized, replacements } = sanitizeTextWithTemplate(local, template);
+
+    expect(sanitized).toBe(template);
+    expect(replacements).toHaveLength(2);
+    expect(replacements[0]).toContain('GIT_NAME');
+    expect(replacements[1]).toContain('GIT_EMAIL');
+  });
+
+  test('preserves lines without placeholders', () => {
+    const template = `key = \${VALUE}
+static = unchanged`;
+    const local = `key = secret123
+static = unchanged`;
+
+    const { sanitized } = sanitizeTextWithTemplate(local, template);
+
+    expect(sanitized).toContain('${VALUE}');
+    expect(sanitized).toContain('static = unchanged');
+  });
+
+  test('handles lines with different whitespace', () => {
+    const template = `  name = \${NAME}`;
+    const local = `  name = Alice`;
+
+    const { sanitized } = sanitizeTextWithTemplate(local, template);
+
+    expect(sanitized).toBe(template);
+  });
+
+  test('returns original when no placeholders in template', () => {
+    const template = `[section]
+name = value`;
+    const local = `[section]
+name = different`;
+
+    const { sanitized, replacements } = sanitizeTextWithTemplate(local, template);
+
+    expect(sanitized).toBe(local);
+    expect(replacements).toHaveLength(0);
+  });
+
+  test('handles suffix after placeholder', () => {
+    const template = `url = https://\${DOMAIN}/api`;
+    const local = `url = https://example.com/api`;
+
+    const { sanitized } = sanitizeTextWithTemplate(local, template);
+
+    expect(sanitized).toBe(template);
+  });
+
+  test('truncates long values in replacement log', () => {
+    const template = `token = \${TOKEN}`;
+    const local = `token = very-long-secret-token-that-should-be-truncated`;
+
+    const { replacements } = sanitizeTextWithTemplate(local, template);
+
+    expect(replacements).toHaveLength(1);
+    expect(replacements[0]).toContain('...');
   });
 });

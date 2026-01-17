@@ -6,6 +6,7 @@ import { isFile, readText, writeText, ensureDir, readJson } from '../utils/fs';
 import { createLogger, type Logger } from './logger';
 import type { FileConfig } from '../schemas/step';
 import { StepSchema } from '../schemas/step';
+import { findVariablesInTemplate } from './extraction';
 
 /**
  * Find all placeholder locations in a JSON object
@@ -79,8 +80,8 @@ export function sanitizeWithTemplate(
     localJson = JSON.parse(localContent);
     templateJson = JSON.parse(templateContent);
   } catch {
-    // Not JSON, return as-is
-    return { sanitized: localContent, replacements: [] };
+    // Not JSON, try text-based sanitization
+    return sanitizeTextWithTemplate(localContent, templateContent);
   }
 
   const placeholderLocations = findPlaceholders(templateJson);
@@ -105,6 +106,95 @@ export function sanitizeWithTemplate(
 
   const sanitized = JSON.stringify(localJson, null, 2);
   return { sanitized, replacements };
+}
+
+/**
+ * Escape special regex characters in a string
+ */
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Sanitize text content by restoring placeholders from template
+ * Works line-by-line for non-JSON files like .gitconfig
+ */
+export function sanitizeTextWithTemplate(
+  localContent: string,
+  templateContent: string
+): { sanitized: string; replacements: string[] } {
+  const replacements: string[] = [];
+  const templateLines = templateContent.split('\n');
+  const localLines = localContent.split('\n');
+
+  // Build a map of template lines that contain variables
+  // Key: the pattern prefix (everything before the variable), Value: the full template line
+  const templatePatternsMap = new Map<string, { line: string; varName: string; prefix: string; suffix: string }[]>();
+
+  for (const line of templateLines) {
+    const vars = findVariablesInTemplate(line);
+    if (vars.length === 0) continue;
+
+    // For simplicity, handle lines with a single variable
+    // Multi-variable lines are more complex and rare
+    if (vars.length === 1) {
+      const varMatch = vars[0];
+      const prefix = line.slice(0, varMatch.startIndex);
+      const suffix = line.slice(varMatch.endIndex);
+
+      // Use trimmed prefix as key for matching (handles whitespace variations)
+      const trimmedPrefix = prefix.trimStart();
+      if (!templatePatternsMap.has(trimmedPrefix)) {
+        templatePatternsMap.set(trimmedPrefix, []);
+      }
+      templatePatternsMap.get(trimmedPrefix)!.push({
+        line,
+        varName: varMatch.name,
+        prefix,
+        suffix,
+      });
+    }
+  }
+
+  // Process local lines and replace with template lines where applicable
+  const resultLines: string[] = [];
+
+  for (const localLine of localLines) {
+    let matched = false;
+
+    // Try to match this local line against template patterns
+    for (const [trimmedPrefix, patterns] of templatePatternsMap) {
+      if (!localLine.trimStart().startsWith(trimmedPrefix)) continue;
+
+      for (const pattern of patterns) {
+        // Build regex to extract the value: prefix + (captured value) + suffix
+        const regexStr = `^${escapeRegex(pattern.prefix)}(.+?)${escapeRegex(pattern.suffix)}$`;
+        const regex = new RegExp(regexStr);
+        const match = localLine.match(regex);
+
+        if (match) {
+          const actualValue = match[1];
+          // Use the template line (with placeholder) instead of local line
+          resultLines.push(pattern.line);
+          matched = true;
+
+          const displayValue = actualValue.length > 20
+            ? `${actualValue.slice(0, 8)}...${actualValue.slice(-4)}`
+            : actualValue;
+          replacements.push(`${pattern.varName}: "${displayValue}" → "\${${pattern.varName}}"`);
+          break;
+        }
+      }
+
+      if (matched) break;
+    }
+
+    if (!matched) {
+      resultLines.push(localLine);
+    }
+  }
+
+  return { sanitized: resultLines.join('\n'), replacements };
 }
 
 interface StepFileConfig {
